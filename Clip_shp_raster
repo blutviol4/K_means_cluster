@@ -1,0 +1,209 @@
+library(rgdal)
+library(raster)
+library(leaflet)
+library(terra)
+library(sf)
+library(sp)
+
+
+setwd("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust")
+
+getwd()
+
+Crop <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Biomass/esdac_biomass_production_geotiff/sqi_fig5_crop1.tif")
+erosion <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Erosion_(GLOSEM)/Water/Resample.tif")
+plot(erosion)
+SOC_l <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/SOC_LOSS/C_eroded/SOC_erd.tif") 
+plot(SOC_l)
+
+denpa <- shapefile("SPH_STAT.shp")
+proj4string(denpa)
+plot(denpa)
+##################################################################################################################
+gc()
+rm(list = ls())
+
+
+setwd(paste(ruta1))
+
+biomass_cz <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Biomass/esdac_biomass_production_geotiff/sqi_fig5_crop1.tif")
+crs(biomass_cz)
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/cz_ETRS.shp")
+proj4string(biomass_cz)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(biomass_cz))
+plot(biomass_cz)
+plot(shp, add=T)
+
+xp <- mask(crop(biomass_cz, extent(shp)), shp)  
+plot(biomass_cz)
+
+
+crop.biomass<- crop(biomass_cz, extent(shp)) ### Corte general - cliping 
+plot(crop.biomass)
+crop.biomass <-raster::mask(crop.biomass, shp) ### Mascara - corte 
+plot(crop.biomass)
+rasterVis::levelplot(crop.biomass)
+
+
+writeRaster(crop.biomass,'biomass_CZ.tif',options=c('TFW=YES'))
+
+
+##################################################################################################################
+
+eros <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Erosion_(GLOSEM)/Water/Resample.tif")
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/cz_ETRS.shp")
+proj4string(eros)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(eros))
+plot(eros)
+plot(shp, add=T)
+
+crop.erosion<- crop(eros, extent(shp)) ### Corte general - cliping 
+plot(crop.erosion)
+crop.erosion <-raster::mask(crop.erosion, shp) ### Mascara - corte 
+plot(crop.erosion)
+rasterVis::levelplot(crop.erosion)
+
+writeRaster(crop.erosion,'erosion_cz.tif',options=c('TFW=YES'))
+
+##################################################################################################################
+soc_loss <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/SOC_LOSS/C_eroded/C_eroded_prj.tif")
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/cz_ETRS.shp")
+proj4string(soc_loss)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(soc_loss))
+plot(soc_loss)
+plot(shp, add=T)
+
+crop.soc_loss<- crop(soc_loss, extent(shp)) ### Corte general - cliping 
+plot(crop.soc_loss)
+crop.soc_loss <-raster::mask(crop.soc_loss, shp) ### Mascara - corte 
+plot(crop.soc_loss)
+rasterVis::levelplot(crop.soc_loss)
+
+writeRaster(crop.soc_loss,'SOC_LOSS.tif',options=c('TFW=YES'))
+
+
+
+
+
+
+
+
+
+
+
+soc_loss_cz <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/SOC_LOSS/C_eroded/C_eroded_prj.tif")
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/cz_ETRS.shp")
+proj4string(soc_loss_cz)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(soc_loss_cz))
+plot(soc_loss_cz)
+plot(shp, add=T)
+
+crop.soc_loss<- crop(soc_loss_cz, extent(shp)) ### Corte general - cliping 
+plot(crop.soc_loss)
+Ccrop.soc_loss <-raster::mask(crop.soc_loss, shp) ### Mascara - corte 
+plot(Ccrop.soc_loss)
+rasterVis::levelplot(Ccrop.soc_loss)
+
+writeRaster(crop.soc_loss,'SOCloss_CZ.tif',options=c('TFW=YES'))
+##################################################################################################################
+soc_loss <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/SOC_LOSS/C_eroded/C_eroded_prj.tif")
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/cz_ETRS.shp")
+proj4string(soc_loss)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(soc_loss))
+plot(soc_loss)
+plot(shp, add=T)
+
+crop.soc_loss<- crop(soc_loss, extent(shp)) ### Corte general - cliping 
+plot(crop.soc_loss)
+crop.soc_loss <-raster::mask(crop.soc_loss, shp) ### Mascara - corte 
+plot(crop.soc_loss)
+rasterVis::levelplot(crop.soc_loss)
+
+writeRaster(crop.soc_loss,'SOC_LOSS.tif',options=c('TFW=YES'))
+
+##################################################################################################################
+soc_loss <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/SOC_LOSS/C_eroded/C_eroded_prj.tif")
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/cz_ETRS.shp")
+proj4string(soc_loss)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(soc_loss))
+plot(soc_loss)
+plot(shp, add=T)
+
+crop.soc_loss<- crop(soc_loss, extent(shp)) ### Corte general - cliping 
+plot(crop.soc_loss)
+crop.soc_loss <-raster::mask(crop.soc_loss, shp) ### Mascara - corte 
+plot(crop.soc_loss)
+rasterVis::levelplot(crop.soc_loss)
+
+writeRaster(crop.soc_loss,'SOC_LOSS.tif',options=c('TFW=YES'))
+
+
+
+
+##################################################################################################################
+soc_loss <- raster("C:/Users/Blutv/OneDrive/Documents/BUNDLES/SOC_LOSS/C_eroded/C_eroded_prj.tif")
+shp <- shapefile("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/RASTER_FINAL_CZ/cz_solo.shp")
+proj4string(soc_loss)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(soc_loss))
+plot(soc_loss)
+plot(shp, add=T)
+
+crop.soc_loss<- crop(soc_loss, extent(shp)) ### Corte general - cliping 
+plot(crop.soc_loss)
+crop.soc_loss <-raster::mask(crop.soc_loss, shp) ### Mascara - corte 
+plot(crop.soc_loss)
+rasterVis::levelplot(crop.soc_loss)
+
+writeRaster(crop.soc_loss,'test_soc.tif',options=c('TFW=YES'))
+summary(crop.soc_loss)
+
+
+
+###############################################################################################
+
+BIOMAS <- raster('C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/RASTER_FINAL_CZ/biomass_CZ.tif')
+
+
+erosion <-raster('C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/RASTER_FINAL_CZ/erosion_cz.tif') 
+c_loss <- raster('C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/RASTER_FINAL_CZ/SOC_los_cz.tif')
+
+ALL_STACK <- stack(BIOMAS,erosion, c_loss)
+plot(ALL_STACK)
+
+
+coo <- coordinates(ALL_STACK)
+
+class(coo)
+coo <- as.data.frame(coo)
+library()
+tibble(coo)
+??tibble
+x <- extract(ALL_STACK,coo)
+tibble(x)
+View(coo)
+
+xx <- cbind(coo,x) 
+View(xx)
+x1 <- na.omit(xx) 
+tibble(x1)
+View(x1)
+summary(ALL_STACK)
+write.csv(x1, "C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/RASTER_FINAL_CZ/SES_ST_DAT.csv", row.names=FALSE)
+
+
+
+
+
+
+BIOMAS <- raster('C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/RASTER_FINAL_CZ/biomass_CZ.tif')
+coo <- coordinates(ALL_STACK)
+coo <- as.data.frame(coo)
+x <- extract(ALL_STACK,coo)
+
