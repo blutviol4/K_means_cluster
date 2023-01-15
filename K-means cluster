@@ -1,0 +1,147 @@
+#CLUSTER CZECH REPUBLIC (20 % OD THE COMPLETE OBSERVATIONS) 
+
+start_time <- Sys.time()
+
+library(tidyverse)
+library(sf)  
+library(raster)  
+library(dplyr) 
+library(ggplot2) 
+library(readr) 
+library(tidyverse)
+library(naniar)
+library(visdat)
+library(readxl)
+library(ggmap)
+library(ggforce)
+library(ggpubr)
+library(patchwork)
+library(concaveman)
+library(emmeans)
+library(multcomp)
+library(multcompView)
+library(ggplot2)
+library(dplyr)
+library(factoextra)
+library(FactoMineR)
+library(NbClust)
+library(ggpubr)
+
+CZ_Complet_obs <- read_csv("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb_clust/CZ_Complet_obs.csv")
+km_w <- CZ_Complet_obs
+
+###############################################################VV
+#Indices de seleccion y optimizacion del numero de cluster
+
+gstat <- fviz_nbclust(km_w, kmeans, method = "gap_stat", nboot = 1000)
+wss <- fviz_nbclust(km_w, kmeans, method = "wss", nboot = 1000)
+sil <- fviz_nbclust(km_w, kmeans, method = "silhouette", nboot = 1000)
+
+res.nbclust <- NbClust(km_w, distance = "euclidean",
+                       min.nc = 2, max.nc = 9, 
+                       method = "complete", index ="all")
+
+######################################################################
+# con el numero de cluster identificado y seleccionado 
+
+km.res_4 <- kmeans(scale(km_w), 4, nstart = 100)
+km.res_6 <- kmeans(scale(km_w), 6, nstart = 100)
+
+# 3. Visualize
+
+library(randomcoloR)
+n <- 4
+palette <- distinctColorPalette(n)
+clusw_4 <- fviz_cluster(km.res_4, data = km_w,
+                        palette = palette,
+                        ellipse.type = "euclid", # Concentration ellipse
+                        star.plot = TRUE, # Add segments from centroids to items
+                        repel = TRUE, # Avoid label overplotting (slow)
+                        ggtheme = theme_minimal())
+
+
+
+
+x <- data.frame(cluster_4 = km.res_4$cluster,
+                cluster_6 = km.res_6$cluster)
+tibble(x)
+
+
+## union de datos reales con cluster ##
+
+y <- CZ_Complet_obs
+names(y)
+y <- y[,3:5]
+x <- cbind(x,y )
+tibble(x)
+x <-  x %>%  rename(v1 = SES_ST.layer.1,
+                    v2 = SES_ST.layer.2,
+                    v3 = SES_ST.layer.3)
+
+tibble(x)
+
+## valores promedio por cluster ##
+
+x$cluster_4 <- as.factor(x$cluster_4)
+x$cluster_6 <- as.factor(x$cluster_6)
+glimpse(x)
+
+b <- x %>% group_by(cluster_4) %>% summarise(n = n(),
+                                        v1 = mean(v1),
+                                        v1sd = sd(x$v1),
+                                        v2 = mean(v2),
+                                        v2sd = sd(x$v2),
+                                        v3 = mean(v3),
+                                        v3sd = sd(x$v3))
+
+
+
+c <- x %>% group_by(cluster_6) %>% summarise(n = n(),
+                                        v1 = mean(v1),
+                                        v1sd = sd(x$v1),
+                                        v2 = mean(v2),
+                                        v2sd = sd(x$v2),
+                                        v3 = mean(v3),
+                                        v3sd = sd(x$v3))
+
+
+
+esquisse::esquisser(b)
+
+
+library(ggplot2)
+
+ggplot(b) +
+ aes(x = cluster_4, fill = cluster_4, weight = v2) +
+ geom_bar() +
+ scale_fill_hue(direction = 1) +
+ labs(x = "Cluster", y = "SOC loss") +
+ theme_gray()
+
+
+library(ggplot2)
+
+ggplot(b) +
+  aes(x = cluster_4, fill = cluster_4, weight = v1) +
+  geom_bar() +
+  scale_fill_hue(direction = 1) +
+  labs(x = "Cluster", y = "Primary biomass") +
+  theme_gray()
+
+
+library(ggplot2)
+
+ggplot(x) +
+ aes(x = cluster_4, fill = cluster_4, weight = v1) +
+ geom_bar() +
+ scale_fill_hue(direction = 1) +
+ labs(x = "Clusters", y = "Numero de pixels") +
+ coord_flip() +
+ theme_gray()
+
+end_time <- Sys.time()
+
+
+###############################################################VV
+
+
