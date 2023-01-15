@@ -1,0 +1,339 @@
+### Librerias o paquetes que se utilizaran para la manipulacion
+### capas raster y vector. 
+
+## 1. Abrir librerias  
+
+library(rgdal) ### analisis espacial ##
+library(raster)
+library(sf)
+library(maptools)
+library(rgeos)
+library(readxl) ## leer dataframe de excel ## 
+library(readr)  ## leer archivos .csv ## 
+library(tidyverse) ## Manipulacion de datos ##  
+library(rasterVis) ## Visualizacion archivos raster ## 
+library(gridExtra) ## Permite unir graficas en una sola ## 
+
+## Direccion del PC donde esta la informacion vinculada
+## ruta de archivos shapes ###
+ 
+ruta1 <- "D:/R/geomatica_agricola/Class/clase4/datos"
+setwd(paste(ruta1))
+
+
+
+### Abrir archivos municipales y departametales
+
+col_dept <- shapefile("adm/COL_adm1.shp") ### Abrir archivos .shp ###
+col_muni <- shapefile("adm/COL_adm2.shp") ### Abrir archivos .shp ###
+
+
+par(mfrow=c(1,2)) ## plot doble  ## Funciones temporales: Activacion
+plot(col_dept, main="Departamentos Colombia")
+plot(col_muni, main="Municipios Colombia")
+
+par(mfrow=c(1,1)) ## volver a un solo grafico ## Desacvtivo plot doble 
+
+col_dept$NAME_1  ## Nombres de los departamentos
+col_muni$NAME_2 ## Nombres de los de departamentos x municipio
+
+### Cliping - Recorte ### 
+
+#Recortar datos espaciales es una tarea básica de SIG. Para los datos vectoriales, 
+#implica la eliminación de caracter?sticas no deseadas fuera de un área de interés.
+
+
+valle_cauca <-subset(col_dept, NAME_1=="Valle del Cauca")
+muni_valle <-  subset(col_muni, NAME_1=="Valle del Cauca")
+cumbre <-  subset(muni_valle, NAME_2=="La Cumbre")
+
+ruta
+getwd()
+
+writeOGR(cumbre, dsn = ruta1, layer = "la_cumbre3",driver = "ESRI Shapefile")
+
+
+plot(cumbre)
+
+par(mfrow=c(1,2)) ## 
+plot(valle_cauca, main="Valle del Cauca")
+plot(muni_valle, main="Municipios del Valle del Cauca")
+
+par(mfrow=c(1,1))
+
+### Departamentos limites 
+
+dept<-subset(col_dept,
+             NAME_1=="Valle del Cauca" | NAME_1=="Tolima"| NAME_1=="Cauca")
+
+plot(dept, main="Departamentos limites del Valle")
+
+## gIntersection() function of rgeos package is also able to clip out undesirable area
+
+clip_01 <- gIntersection(valle_cauca, col_muni, byid = TRUE, drop_lower_td = TRUE) 
+clip_01
+plot(clip_01, main= "Clip with gIntersection")
+
+## The intersect() function of raster package works like subset function
+
+clip_02 <- raster::intersect(muni_valle,valle_cauca)
+clip_02
+plot(clip_02, main="Clip with intersect")
+
+
+#### Union #### 
+
+#Union combina dos o varios objetos espaciales y crea nuevas características donde 
+#se conservan la geometría y los atributos de las características de entrada.
+
+## Primero se realizara la seleccion de tres departamentos y se descargaran 
+
+valle <-subset(col_dept,NAME_1=="Valle del Cauca")
+tolima <-subset(col_dept,NAME_1=="Tolima")              
+cauca <- subset(col_dept,NAME_1=="Cauca")
+
+getwd() ## Donde estoy ??? ruta de trabajo
+
+### Descargar archivo .shp ####
+
+writeOGR(valle, dsn = ruta1, layer = "valle3",driver = "ESRI Shapefile" )
+writeOGR(tolima, dsn = ruta1, layer = "tolima3",driver = "ESRI Shapefile")
+writeOGR(cauca, dsn = ruta1, layer = "cauca3",driver = "ESRI Shapefile" )
+
+getwd()
+
+## Abrir shapes ##
+valle <- shapefile("valle3.shp") ### Abrir archivos .shp ###
+cauca <- shapefile("cauca3.shp") ### Abrir archivos .shp ###
+tolima <- shapefile("tolima3.shp") ### Abrir archivos .shp ###
+
+## Union: Se debe realizar maximo entre dos capas ### 
+
+union_01<-raster::union(valle,cauca) ### capaA
+union_02<-raster::union(union_01, tolima) ### union de capaA-x
+
+union_02@data ## Ver los datos 
+
+plot(union_02)
+
+### Interseccion capas ### 
+
+# Intersect calcula un área geométrica común de dos clases de entidad.
+
+
+
+### no abrir - no llamar ###
+paramos <- shapefile("Paramos_Declarados_Junio_2020.shp")
+par.valle<- raster::intersect(valle, paramos)
+head(par.valle)
+
+plot(par.valle)
+
+#### ConvexHull #### 
+
+
+espeletia <- read_csv("point/Espeletia_killipii_original_gbif.csv")
+
+## Filtrar datos que no presentan coordenadas 
+
+espe <- espeletia %>%
+  filter(!is.na(longitude))%>%
+  filter(!is.na(latitude))
+
+## Funcion para crear spatial points de archivo en formato de texto
+
+create_points <- function(p_anisohn){ ## .csv 
+  
+  WGScoor<-  p_anisohn ## asignar el objeto  
+  coordinates(WGScoor)=~longitude+latitude ##  cuales son las coorde
+  proj4string(WGScoor)<- CRS("+proj=longlat +datum=WGS84") ## referencia de coordenadas ##
+  points_shp <-spTransform(WGScoor,CRS("+proj=longlat"))
+  
+  return(points_shp)
+  } ### puntos en formato espacial 
+
+esp_p <- create_points(espe)
+esp_p
+
+## Conseguir coordenadas ## 
+
+xy<-coordinates(esp_p)
+xy
+# Crear convex hull
+CH.DF <- chull(xy)
+
+# Closed polygona
+coords <- xy[c(CH.DF, CH.DF[1]), ]
+plot(esp_p, pch=19)
+lines(coords, col="red")
+
+#### Buffer ### 
+
+espe.buffer <- gBuffer(esp_p, width=0.1, byid=TRUE) # 1 km buffer
+
+plot(espe.buffer)
+
+
+##### Manipulacion de datos raster ########### 
+
+proj4string(valle) ## Proyectar el sistema de coordenadas 
+
+#### Cliping o recorte en raster ####
+
+### Abrir archivo raster ### 
+
+getwd() ## Donde estoy ? ##
+clima <- raster("clima/tmaxtminmeancol.tif")
+res(clima)
+plot(clima)
+crop.valle<- crop(clima, extent(valle)) ### Corte general - cliping 
+plot(crop.valle)
+crop.valle <-raster::mask(crop.valle, valle) ### Mascara - corte 
+plot(crop.valle)
+rasterVis::levelplot(crop.valle)
+
+ #### Reclasificacion de valores raster #### 
+
+### Histograma de valores de temperatura del valle ### 
+
+HISTO.CO<-hist(crop.valle, 
+               breaks=3,  
+               col= "purple",                                             # color of histogram 
+               main="Distribution of Temperatura values with 4 breaks",     # tittle of the plot
+               xlab= "Temperatura",                                     # x-axis name
+               ylab = "Number of Pixels")                                 # y-axis name
+box()
+
+## Ahora, puede verificar dónde están los cortes y cuántos píxeles en cada categoría
+
+
+HISTO.CO$breaks ### Rangos de las categorias de la temperatura 
+
+
+HISTO.CO$counts ## Numero de pixels por cada rango
+
+#Clase 1: 0 - 10  (baja Temperatura)
+#Clase 2: 10 - 20 (media Temperatura)
+#Clase 3: 20 - 30 (alta Temperatura)
+
+# Create a dataframe
+reclass_df <- c(0, 5, 1,
+                5, 10,2,
+                10, 15, 3,
+                15, 20, 4,
+                20, 25, 5,
+                25, 30, 6)
+
+reclass_df
+
+## remodelar el marco de datos a matriz ## 
+
+reclass_m <- matrix(reclass_df,
+                    ncol = 3,
+                    byrow = TRUE)
+reclass_m
+
+
+valle.reclass <- raster::reclassify(crop.valle,
+                              reclass_m)
+
+
+coo <- coordinates(valle.reclass)
+
+class(coo)
+coo <- as.data.frame(coo)
+tibble(coo)
+x <- extract(valle.reclass,coo)
+x <- data.frame(temperatura = x)
+tibble(x)
+xx <- cbind(coo,x) 
+x1 <- na.omit(xx) 
+tibble(x1)
+
+te <- extract(crop.valle,x1[,1:2],)
+te <- data.frame(temp = te)
+tibble(te)
+
+xx2 <- cbind(x1,te)
+tibble(xx2)
+
+
+
+
+
+
+
+
+
+
+valle.reclass
+plot(valle.reclass)
+
+barplot(valle.reclass,
+        main = "Number of pixels in each class")
+box()
+
+plot(valle.reclass,
+     legend = FALSE,
+     col = c("green", "blue", "red", "yellow", "black"), axes = FALSE,
+     main = "Reclassificacion temperatura")
+
+
+legend("left",
+       legend = c("Baja", "Media", "Alta"),
+       fill = c("green", "blue", "red"),
+       border = FALSE,
+       bty = "n") # turn off legend border
+
+
+### Algebra de mapas ## 
+
+#El álgebra ráster en R es un álgebra basada en conjuntos para manipular un objeto 
+#ráster más capas ráster ("mapas") de dimensiones similares para 
+#producir una nueva capa ráster (mapa) utilizando operaciones algebraicas
+
+
+valle.1 <- crop.valle*10
+
+plot(valle.1, main= "temperatura x 10")
+
+valle.2 <- crop.valle/10
+
+plot(valle.2, main= "temperatura / 10")
+
+### Agregacion ### 
+
+mean.valle<-aggregate(crop.valle, fact=2, fun=mean) 
+sd.valle<-aggregate(crop.valle, fact=2, fun=sd) 
+se.valle<-sd.valle/sqrt(2)
+mean.valle
+
+p1<-spplot(mean.valle, main="Media de temperatura") ### Media
+p2<-spplot(sd.valle, main="SD de temperatura") ## desviacion estandar 
+p3<-spplot(se.valle, main="SE de temperatura") ## error estandar
+gridExtra::grid.arrange(p1, p2, p3, ncol=3) ## Unir los graficos ##
+
+
+
+#### Remuestreo #### 
+
+valle.resa<-resample(mean.valle, crop.valle, method='bilinear') # aumentar resolucion 
+valle.resa
+
+plot(valle.resa, main="Remuestreo temperatura")
+
+barplot(valle.resa,
+        main = "Number of pixels in each class")
+
+### stack 
+
+s<-stack(mean.valle,sd.valle, se.valle) # stack
+names(s)<-c("Media", "SD","SE")  # rename the layers
+s
+
+spplot(s)
+
+levelplot(s)
+
+
+
