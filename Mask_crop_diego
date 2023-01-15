@@ -1,0 +1,100 @@
+### donde estoy ###
+getwd() 
+## subiendo el raster  ##
+clima <- raster("clima/tmaxtminmeancol.tif")
+res(clima)
+plot(clima)
+
+### cortar el mapa de temperatura ### 
+
+crop.valle<- crop(clima, extent(valle)) ### Corte general - cliping 
+plot(crop.valle)
+crop.valle <-raster::mask(crop.valle, valle) ### Mascara - corte 
+plot(crop.valle)
+rasterVis::levelplot(crop.valle)
+
+#### Reclasificacion de valores raster #### 
+
+### Histograma de valores de temperatura del valle ### 
+
+HISTO.CO<-hist(crop.valle, 
+               breaks=3,  
+               col= "purple",                                             # color of histogram 
+               main="Distribution of Temperatura values with 4 breaks",     # tittle of the plot
+               xlab= "Temperatura",                                     # x-axis name
+               ylab = "Number of Pixels")                                 # y-axis name
+box()
+
+## Ahora, puede verificar dónde están los cortes y cuántos píxeles en cada categoría
+
+
+HISTO.CO$breaks ### Rangos de las categorias de la temperatura 
+
+
+HISTO.CO$counts ## Numero de pixels por cada rango
+
+
+# Create a dataframe para definir rangos ### 
+reclass_df <- c(0, 5, 1,
+                5, 10,2,
+                10, 15, 3,
+                15, 20, 4,
+                20, 25, 5,
+                25, 30, 6)
+
+reclass_df
+
+## remodelar el marco de datos a matriz ## 
+
+reclass_m <- matrix(reclass_df,
+                    ncol = 3,
+                    byrow = TRUE)
+reclass_m
+
+### relasifico cada uno de los valores ###
+
+valle.reclass <- raster::reclassify(crop.valle,
+                                    reclass_m)
+
+### tener coordenadas del raster valle.reclass
+coo <- coordinates(valle.reclass)
+## clase ##
+class(coo)
+
+## convrtir en dataframe coordenadas 
+coo <- as.data.frame(coo)
+tibble(coo)
+
+### extraer clases #####
+x <- extract(valle.reclass,coo)
+
+## convierto en dataframe datos extraidos ## 
+x <- data.frame(temperatura = x)
+tibble(x)
+
+### unir datos con coordenadas ##
+xx <- cbind(coo,x) 
+## omito coordenadas vacias ##3
+x1 <- na.omit(xx) 
+tibble(x1)
+
+## extrer datos reales del raster ###
+##
+
+x1
+
+te <- extract(crop.valle,x1[,1:2])
+
+## convertir data frame valores reales ## 
+te <- data.frame(temp = te)
+tibble(te)
+
+## unir base de datos de coordenadas con datos reales ##
+
+xx2 <- cbind(x1,te)
+tibble(xx2)
+
+## xx es la data frame 
+
+
+
