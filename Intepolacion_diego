@@ -1,0 +1,116 @@
+# ----------------------------------------------------------
+
+rm(list = ls()) # Clean global environment
+graphics.off() # Clean plots
+
+# Librerias usadas en esta practica:
+library(rgdal)
+library (raster)
+library(tmap)
+library(gstat)
+library(sp)
+library(lattice)
+library(automap)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(magrittr)
+library(dplyr)
+
+# ----------------------------------------------------------
+
+ruta <- "D:/OneDrive - CGIAR/Conejo_Ing/2021/geomatica_agricola/Class/clase- interpolacion"
+setwd(paste(ruta))
+
+datos <- read.csv("Datos_mapa.csv", stringsAsFactors = FALSE)
+
+tibble(datos)
+
+### Importante! las coordenadas deben estar en proyeccion!! ##
+
+# Determinar el sistema de coordenadas para la proyeccion
+utm17nCRS <- CRS("+init=epsg:32617")
+
+# Convertir los puntos en el formato de puntos espaciales para su utilizaci?n en geoestad?stica
+datos_SP <- SpatialPointsDataFrame(datos[,1:2], datos, proj4string = CRS("+proj=longlat"))
+datos_SP <- spTransform(datos_SP, utm17nCRS) ## Sistema de coordenadas deseado
+
+datos2 <- datos_SP
+datos2@data <-datos_SP@data[5] ## Asociando datos de potasio
+
+# Generar el contorno del campo
+XY <- datos2@coords
+contorno<-chull(XY) ## convex hull ## 
+contorno<-cbind(contorno,contorno[1])
+plot(XY[,1],XY[,2])
+points(XY[chull(XY),1],XY[chull(XY),2],col=2,pch=19)
+lines(XY[contorno,])
+
+# Convertir el contorno en un poligono .shp
+bordes.point <- data.frame(XY[chull(XY),1],XY[chull(XY),2])
+poly1 <- sp::Polygon(bordes.point)
+bordessp <- sp::SpatialPolygons(list(sp::Polygons(list(poly1),ID = "A")), proj4string = utm17nCRS)
+datos2@bbox <- bordessp@bbox
+
+# Graficar el campo con los puntos
+tm_shape(bordessp) +
+  tm_polygons() + 
+  tm_shape(datos2) +
+  tm_dots(col = "K",palette = "RdBu", auto.palette.mapping = FALSE , title="Valores predichos",size=0.1) +
+  tm_legend(legend.outside=TRUE)
+
+# Generacion de los puntos para interpolacion
+grd              <- as.data.frame(spsample(datos2, "regular", n=100000))
+names(grd)       <- c("X", "Y")
+coordinates(grd) <- c("X", "Y")
+gridded(grd)     <- TRUE
+fullgrid(grd)    <- TRUE
+
+# Como se crea una nueva malla se debe a?adir la proyecci?n
+proj4string(datos2) <- proj4string(datos2)
+proj4string(grd) <- proj4string(datos2)
+
+# Interpolaci?n inverse distance weighted (IDW) valor de potencia 2
+P.idw <- gstat::idw(K ~ 1, datos2, newdata=grd, idp=2.0)
+
+# Convertir el resultado en raster y limitar el resultado al contorno
+r       <- raster(P.idw)
+r.m     <- mask(r, bordessp)
+
+# Grafica de la interpolacion
+tm_shape(r.m) + 
+  tm_raster(n=10, auto.palette.mapping = TRUE, title="Interpolacion IDW") + 
+  tm_shape(datos2) + tm_dots(size=0.01) +
+  tm_legend(legend.outside=TRUE)
+
+
+# Preparación para la interpolación kriging carbono organico
+kr_data<-data.frame(cbind(datos$X, datos$Y,datos$OC))
+names(kr_data)[1:3]<-c("X","Y","K")
+coordinates(kr_data) <- ~ X + Y
+f.1 <- as.formula(K ~ X + Y) 
+
+# C?mputo del semivariograma, las funciones autofirvariograma y fit.variogram
+# optimiza los par?metros del semivariograma
+variogram = autofitVariogram(f.1,kr_data,model = c("Sph", "Exp", "Gau"))
+var.smpl <- variogram(f.1, datos2, cloud = FALSE, cutoff=1000000, width=89900)
+dat.fit  <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
+                          vgm(psill=14, model="Sph", range=590000, nugget=0))
+p1=plot(variogram,cex=0.75, cex.lab=0.5, pch=21, col="red",fill="black", alpha=0.75)
+
+# Hacer el c?mputo de la interpolacion kriging
+dat.krg <- krige(f.1, datos2, grd, dat.fit)
+
+# Convertir el resultado en raster y limitar el resultado al contorno
+r <- raster(dat.krg)
+r.m <- mask(r, bordessp)
+
+# Gr?fica de la interpolaci?n kriging
+
+tm_shape(r.m) + 
+  tm_raster(n=10, palette="RdBu", auto.palette.mapping=FALSE, title="Interpolacion kriging") +
+  tm_shape(datos2) + tm_dots(size=0.01) +
+  tm_legend(legend.outside=TRUE)
+
+# png("Kriging.png", width=500, height=500)
+# dev.off()
