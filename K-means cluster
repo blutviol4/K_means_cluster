@@ -36,6 +36,35 @@ CZ_Complet_obs <- read_csv("C:/Users/Blutv/OneDrive/Documents/BUNDLES/Bundles/nb
 km_w <- CZ_Complet_obs
 
 ###############################################################VV
+
+library(raster)
+library(sp)
+library(rgdal)
+library(sf)
+library(stars)
+library(gstat)
+library(base)
+library(knitr)
+library(rmarkdown)
+library(dismo)
+library(raster)
+library(ecbtools)
+
+biomass<-file.path(inputDir,"Crop_bio_cz.tif")
+Biomass1 <- stars::read_stars(biomass)
+plot(Biomass1)
+
+SOC_LOSS<-file.path(inputDir,"SOC_loss_cz.tif")
+SOC_LOSS1 <- stars::read_stars(SOC_LOSS)
+plot(SOC_LOSS1)
+
+Erosion<-file.path(inputDir,"water_ero_cz.tif")
+erosion1 <- stars::read_stars(Erosion)
+plot(erosion1)
+
+stack("biomass","SOC_LOSS", "Erosion",layers=NULL)
+
+
 ####creating raster stack and extractin matrix with complete observations 
 
 SES_ST<- stack('R_stack.tif')
@@ -350,3 +379,8 @@ x$cluster_4 <-as.numeric(x$cluster_4)
 # Convertir los puntos en el formato de puntos espaciales para su utilizaci?n en geoestad?stica
 datos_SP <- SpatialPointsDataFrame(x[,3:4], x, proj4string = CRS("+proj=longlat"))
 datos_SP <- spTransform(datos_SP, utm17nCRS) ## Sistema de coordenadas deseado
+
+
+
+
+
