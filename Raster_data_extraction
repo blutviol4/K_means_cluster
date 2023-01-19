@@ -1,0 +1,23 @@
+require(rgdal)
+
+my.layer<- readOGR('NUTS_RG_20M_2021_3035.shp')
+plot(my.layer)
+
+grid1<-spsample(my.layer,cellsize=1000,type='regular')
+plot(grid1)
+
+#gridded(grid1) <- TRUE
+proj4string(grid1) <- proj4string(my.layer)
+
+
+C.eroded <- readGDAL('C_eroded_prj.tif')
+
+C.over <- over(grid1,C.eroded)
+
+C.grid.data <- data.frame(coordinates(grid1),C.over=C.over$band1)
+
+coordinates(C.grid.data) <- ~x1+x2
+
+spplot(C.grid.data['C.over'])
+gridded(C.grid.data)<-T
+spplot(C.grid.data['C.over'])
