@@ -1,0 +1,70 @@
+rm(list = ls())
+
+library(rgdal)
+library(raster)
+library(leaflet)
+library(terra)
+library(sf)
+library(sp)
+
+setwd("C:/Users/Blutv/OneDrive/Documents/BUNDLES/EU_test")
+
+
+SOC_LOSS <- raster("C_eroded_prj.tif")
+crs(SOC_LOSS)
+shp <- shapefile("NUTS_RG_20M_2021_3035.shp")
+proj4string(SOC_LOSS)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(SOC_LOSS))
+plot(SOC_LOSS)
+
+  
+  
+plot(shp, add=T)
+
+xp <- mask(crop(SOC_LOSS, extent(shp)), shp)  
+plot(xp)
+writeRaster(xp,'soc_test.tif',options=c('TFW=YES'))
+
+
+
+
+erosion <- raster("Multiple_concurrent_soil_erosion_processes.tif")
+crs(erosion)
+shp <- shapefile("NUTS_RG_20M_2021_3035.shp")
+proj4string(erosion)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(erosion))
+plot(erosion)
+plot(shp, add=T)
+
+er <- mask(crop(erosion, extent(shp)), shp)  
+plot(er)
+writeRaster(er,'erosion_test.tif',options=c('TFW=YES'))
+
+
+
+Biomas <- raster("sqi_fig5_crop1.tif")
+crs(Biomas)
+shp <- shapefile("NUTS_RG_20M_2021_3035.shp")
+proj4string(Biomas)
+proj4string(shp)
+shp <- spTransform(shp, proj4string(Biomas))
+plot(Biomas)
+plot(shp, add=T)
+
+bIOM <- mask(crop(Biomas, extent(shp)), shp)  
+plot(bIOM)
+writeRaster(bIOM,'bIOMAS_test.tif',options=c('TFW=YES'))
+
+eros_test<- raster('Erosion_test_resam.tif')
+
+v <- getValues(bIOM)
+tibble(v)
+coo <- coordinates(bIOM)
+
+xx <- cbind(coo,v)
+
+i <- which(!is.na(v))
+v <- na.omit(v)
+
