@@ -1,3 +1,5 @@
+#https://jmlondon.github.io/solamac-spatial-mapping/exercise-1-loading-spatial-data.html
+
 library(raster)
 library(sp)
 library(sf)
