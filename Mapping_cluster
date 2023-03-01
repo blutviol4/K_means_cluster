@@ -6,6 +6,8 @@ library(sf)
 library(lattice)
 library(leaflet)
 library(ggplot2)
+library(tidyverse)
+library(ggspatial)
 cz<- read.csv("Cluster_eu_test.csv")
 
 ##gridded(cz) <- ~x+y
@@ -13,6 +15,7 @@ cz<- read.csv("Cluster_eu_test.csv")
 ##p.r <- raster(cz)
 
 cz$cluster_3<-as.factor(cz$cluster_3)
+cz$cluster_6<-as.factor(cz$cluster_6)
 ##spplot(cz["cluster_3"])
 ##?spplot
 ##studyarea<-file.path(inputDir,"NUTS_RG_20M_2021_3035.shp")
@@ -24,6 +27,22 @@ studyarea<-read_sf("NUTS_RG_20M_2021_3035.shp")
 
 #studyarea<-file.path(inputDir,"NUTS_RG_20M_2021_3035.shp")
 
+ggplot()+ geom_sf(data=studyarea, color="grey")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
+  scale_fill_manual(values =c('blue','red','orange'))
+
+
+ggplot()+ geom_sf(data=studyarea, color="grey")+annotation_map_tile("cartolight")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
+  scale_fill_manual(values =c('blue','red','orange'))
+
+#ggplot()+ geom_sf(data=studyarea, color="grey")+annotation_map_tile(zoom = 13, cachedir = system.file("rosm.cache", package = "ggspatial"))+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
+#  scale_fill_manual(values =c('blue','red','orange'))
+
+ggplot()+ geom_sf(data=studyarea, color="grey")+annotation_map_tile(type = "osm")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
+  scale_fill_manual(values =c('blue','red','orange'))
+
+
+ggplot()+ geom_sf(data=studyarea, color="grey")+annotation_map_tile(type = "osm")+ layer_spatial(studyarea, color="grey")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
+  scale_fill_manual(values =c('blue','red','orange'))+ annotation_scale(location = "br", width_hint = 0.5, style = "ticks")
 
 
 ggplot()+ geom_sf(data=studyarea, color="grey")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
@@ -37,3 +56,15 @@ esri_ocean <- paste0('https://services.arcgisonline.com/arcgis/rest/services/',
 ggplot()+ geom_sf(data=studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+ layer_spatial(studyarea, color="grey")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_3))+
   scale_fill_manual(values =c('blue','red','orange'))+ annotation_scale(location = "br", width_hint = 0.5, style = "ticks")
 ##############################################################
+
+#cluster_6
+#https://www.datanovia.com/en/blog/awesome-list-of-657-r-color-names/
+
+ggplot()+ geom_sf(data=studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+ layer_spatial(studyarea, color="grey")+ geom_tile(data = cz, aes(x=x, y=y, fill= cluster_6))+
+  scale_fill_manual(values =c('blue','red','cyan3','brown','darkorange1','darkorchid1'))+ annotation_scale(location = "br", width_hint = 0.5, style = "ticks")
+
+
+
+
+
+
