@@ -1,0 +1,44 @@
+library(raster)
+library(sp)
+library(sf)
+library(lattice)
+library(leaflet)
+library(ggplot2)
+
+
+library(tidyverse)
+library(ggspatial)
+#cz<- read.csv("Cluster_eu_Test_fin.csv")
+cz<- read.csv("Unir_fuzzy.csv")
+
+studyarea<-read_sf("NUTS_RG_20M_2021_3035.shp")
+esri_ocean <- paste0('https://services.arcgisonline.com/arcgis/rest/services/',
+                     'Ocean/World_Ocean_Base/MapServer/tile/${z}/${y}/${x}.jpeg')
+                     
+                     library(ggplot2)
+library(gcookbook)
+m1 <- cz[, c(5,11,12)]
+m2 <- cz[, c(6,11,12)]
+m3 <- cz[, c(7,11,12)]
+m4 <- cz[, c(8,11,12)]
+m5 <- cz[, c(9,11,12)]
+m6 <- cz[, c(10,11,12)]
+
+ggplot(m1, aes(x, y)) +layer_spatial(studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+
+  geom_tile(data = cz, aes(x=x, y=y, fill= X1))+scale_fill_gradient()
+
+
+ggplot(m2, aes(x, y)) +layer_spatial(studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+
+  geom_tile(data = cz, aes(x=x, y=y, fill= X2))+scale_fill_gradient()
+
+ggplot(m3, aes(x, y)) +layer_spatial(studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+
+  geom_tile(data = cz, aes(x=x, y=y, fill= X3))+scale_fill_gradient()
+
+ggplot(m4, aes(x, y)) +layer_spatial(studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+
+  geom_tile(data = cz, aes(x=x, y=y, fill= X4))+scale_fill_gradient()
+
+ggplot(m5, aes(x, y)) +layer_spatial(studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+
+  geom_tile(data = cz, aes(x=x, y=y, fill= X5))+scale_fill_gradient()
+
+ggplot(m6, aes(x, y)) +layer_spatial(studyarea, color="grey")+annotation_map_tile(type = esri_ocean, progress = "none")+
+  geom_tile(data = cz, aes(x=x, y=y, fill= X6))+scale_fill_gradient()
